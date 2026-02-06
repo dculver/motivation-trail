@@ -1,0 +1,1769 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Motivation Trail</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #2d1b00;
+            font-family: 'VT323', monospace;
+            color: #00ff00;
+            overflow-y: auto;
+            overflow-x: hidden;
+            cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"><rect width="16" height="16" fill="%2300ff00"/></svg>') 8 8, auto;
+            min-height: 100vh;
+            padding: 10px;
+        }
+
+        .crt-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1000;
+            background: 
+                repeating-linear-gradient(
+                    0deg,
+                    rgba(0, 255, 0, 0.03) 0px,
+                    transparent 1px,
+                    transparent 2px,
+                    rgba(0, 255, 0, 0.03) 3px
+                );
+            animation: flicker 0.15s infinite;
+        }
+
+        @keyframes flicker {
+            0% { opacity: 0.95; }
+            50% { opacity: 1; }
+            100% { opacity: 0.95; }
+        }
+
+        .game-container {
+            max-width: 900px;
+            width: 100%;
+            margin: 20px auto;
+            padding: 20px;
+            background: #000;
+            border: 8px solid #00ff00;
+            box-shadow: 
+                0 0 20px rgba(0, 255, 0, 0.5),
+                inset 0 0 30px rgba(0, 255, 0, 0.1);
+            min-height: 400px;
+            position: relative;
+            box-sizing: border-box;
+        }
+
+        @media (max-width: 768px) {
+            .game-container {
+                margin: 10px;
+                padding: 15px;
+                border-width: 4px;
+            }
+            
+            h1 {
+                font-size: 20px !important;
+            }
+        }
+
+        .scan-line {
+            position: absolute;
+            width: 100%;
+            height: 2px;
+            background: rgba(0, 255, 0, 0.3);
+            top: 0;
+            left: 0;
+            animation: scan 6s linear infinite;
+            z-index: 10;
+        }
+
+        @keyframes scan {
+            0% { top: 0; }
+            100% { top: 100%; }
+        }
+
+        h1 {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 32px;
+            text-align: center;
+            margin-bottom: 30px;
+            text-shadow: 3px 3px 0 #006600;
+            animation: glow 2s ease-in-out infinite;
+        }
+
+        @keyframes glow {
+            0%, 100% { text-shadow: 3px 3px 0 #006600, 0 0 10px #00ff00; }
+            50% { text-shadow: 3px 3px 0 #006600, 0 0 20px #00ff00, 0 0 30px #00ff00; }
+        }
+
+        .screen {
+            display: none;
+        }
+
+        .screen.active {
+            display: block;
+            animation: fadeIn 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .ascii-art {
+            font-size: 14px;
+            line-height: 14px;
+            margin: 20px 0;
+            text-align: center;
+            color: #00ff00;
+            overflow-x: auto;
+            white-space: pre;
+        }
+
+        @media (max-width: 768px) {
+            .ascii-art {
+                font-size: 10px;
+                line-height: 10px;
+            }
+        }
+
+        .status-bar {
+            border: 2px solid #00ff00;
+            padding: 15px;
+            margin: 20px 0;
+            background: rgba(0, 255, 0, 0.05);
+            font-size: 20px;
+        }
+
+        .stat {
+            margin: 10px 0;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .stat-label {
+            min-width: 180px;
+            flex-shrink: 0;
+        }
+
+        .stat-bar {
+            background: #003300;
+            width: 250px;
+            max-width: 100%;
+            height: 20px;
+            border: 1px solid #00ff00;
+            position: relative;
+            flex-grow: 1;
+        }
+
+        @media (max-width: 768px) {
+            .status-bar {
+                font-size: 16px;
+                padding: 10px;
+            }
+            
+            .stat {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .stat-bar {
+                width: 100%;
+            }
+        }
+
+        .stat-fill {
+            background: #00ff00;
+            height: 100%;
+            transition: width 0.5s;
+        }
+
+        .narrative {
+            font-size: 24px;
+            line-height: 1.6;
+            margin: 20px 0;
+            padding: 20px;
+            border: 2px dashed #00ff00;
+            background: rgba(0, 100, 0, 0.1);
+        }
+
+        @media (max-width: 768px) {
+            .narrative {
+                font-size: 18px;
+                padding: 15px;
+            }
+        }
+
+        .choices {
+            margin: 30px 0;
+        }
+
+        .choice-btn {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            margin: 10px 0;
+            background: #000;
+            color: #00ff00;
+            border: 3px solid #00ff00;
+            font-family: 'VT323', monospace;
+            font-size: 22px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: left;
+            box-sizing: border-box;
+        }
+
+        .choice-btn:hover {
+            background: #00ff00;
+            color: #000;
+            box-shadow: 0 0 15px #00ff00;
+            transform: translateX(10px);
+        }
+
+        .choice-btn:active {
+            transform: scale(0.98);
+        }
+
+        @media (max-width: 768px) {
+            .choice-btn {
+                font-size: 18px;
+                padding: 12px;
+            }
+        }
+
+        .theory-box {
+            background: rgba(0, 50, 0, 0.3);
+            border: 3px double #00ff00;
+            padding: 20px;
+            margin: 20px 0;
+            font-size: 20px;
+        }
+
+        .theory-title {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 16px;
+            margin-bottom: 15px;
+            color: #00ff00;
+        }
+
+        .blink {
+            animation: blink 1s step-start infinite;
+        }
+
+        @keyframes blink {
+            50% { opacity: 0; }
+        }
+
+        .game-over {
+            text-align: center;
+            font-size: 28px;
+            padding: 40px;
+        }
+
+        .game-over h2 {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 36px;
+            margin-bottom: 30px;
+        }
+
+        .pixelated {
+            image-rendering: pixelated;
+            image-rendering: -moz-crisp-edges;
+            image-rendering: crisp-edges;
+        }
+
+        .progress-indicator {
+            text-align: center;
+            font-size: 20px;
+            margin: 20px 0;
+        }
+
+        .trail-segment {
+            display: inline-block;
+            margin: 0 5px;
+        }
+
+        .achievement {
+            background: rgba(255, 215, 0, 0.1);
+            border: 2px solid #ffd700;
+            color: #ffd700;
+            padding: 15px;
+            margin: 10px 0;
+            animation: achievement-pop 0.5s;
+        }
+
+        @keyframes achievement-pop {
+            0% { transform: scale(0); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        .dialogue {
+            margin: 15px 0;
+            padding: 15px;
+            border-left: 4px solid #00ff00;
+            background: rgba(0, 100, 0, 0.1);
+            font-size: 22px;
+        }
+
+        .speaker {
+            font-weight: bold;
+            color: #00ff00;
+            margin-bottom: 5px;
+        }
+
+        /* Animated Graphics */
+        .pixel-scene {
+            position: relative;
+            height: 120px;
+            margin: 20px 0;
+            overflow: hidden;
+            border: 2px solid #00ff00;
+            background: linear-gradient(180deg, #001a00 0%, #000d00 100%);
+        }
+
+        .wagon {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            font-size: 40px;
+            animation: wagon-bounce 1s ease-in-out infinite;
+        }
+
+        @keyframes wagon-bounce {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-5px); }
+        }
+
+        .walking-scholar {
+            position: absolute;
+            bottom: 20px;
+            font-size: 40px;
+            animation: walk 3s linear infinite;
+        }
+
+        @keyframes walk {
+            0% { left: -50px; }
+            100% { left: calc(100% + 50px); }
+        }
+
+        .stars {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+        }
+
+        .star {
+            position: absolute;
+            color: #00ff00;
+            font-size: 12px;
+            animation: twinkle 2s ease-in-out infinite;
+        }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+
+        .ground {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 20px;
+            background: repeating-linear-gradient(
+                90deg,
+                #003300 0px,
+                #003300 10px,
+                #002200 10px,
+                #002200 20px
+            );
+            animation: scroll-ground 20s linear infinite;
+        }
+
+        @keyframes scroll-ground {
+            0% { background-position: 0 0; }
+            100% { background-position: -200px 0; }
+        }
+
+        .book-stack {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            bottom: 20px;
+            font-size: 30px;
+            animation: stack-sway 2s ease-in-out infinite;
+        }
+
+        @keyframes stack-sway {
+            0%, 100% { transform: translateX(-50%) rotate(-2deg); }
+            50% { transform: translateX(-50%) rotate(2deg); }
+        }
+
+        .coffee-steam {
+            position: absolute;
+            bottom: 60px;
+            left: 60%;
+            font-size: 20px;
+            animation: steam-rise 3s ease-in-out infinite;
+        }
+
+        @keyframes steam-rise {
+            0% { transform: translateY(0) scale(1); opacity: 0.8; }
+            100% { transform: translateY(-40px) scale(1.5); opacity: 0; }
+        }
+
+        .paper-fly {
+            position: absolute;
+            font-size: 25px;
+            animation: fly 8s linear infinite;
+            top: 20%;
+        }
+
+        @keyframes fly {
+            0% { left: 100%; transform: rotate(0deg); }
+            100% { left: -10%; transform: rotate(-360deg); }
+        }
+
+        .loading-dots {
+            display: inline-block;
+        }
+
+        .loading-dots::after {
+            content: '...';
+            animation: dots 1.5s steps(4, end) infinite;
+        }
+
+        @keyframes dots {
+            0%, 20% { content: '.'; }
+            40% { content: '..'; }
+            60%, 100% { content: '...'; }
+        }
+
+        .thinking {
+            animation: thinking-pulse 1s ease-in-out infinite;
+        }
+
+        @keyframes thinking-pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(0.95); }
+        }
+
+        .success-particles {
+            position: fixed;
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        .particle {
+            position: absolute;
+            font-size: 20px;
+            animation: particle-float 2s ease-out forwards;
+        }
+
+        @keyframes particle-float {
+            0% { 
+                transform: translateY(0) scale(1);
+                opacity: 1;
+            }
+            100% { 
+                transform: translateY(-100px) scale(0);
+                opacity: 0;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .pixel-scene {
+                height: 80px;
+            }
+            
+            .wagon, .walking-scholar, .book-stack {
+                font-size: 25px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="crt-overlay"></div>
+    <div class="game-container">
+        <div class="scan-line"></div>
+        <h1>THE MOTIVATION TRAIL</h1>
+
+        <!-- TITLE SCREEN -->
+        <div id="title-screen" class="screen active">
+            <div class="pixel-scene">
+                <div class="stars">
+                    <span class="star" style="left: 10%; top: 10%;">✦</span>
+                    <span class="star" style="left: 30%; top: 20%; animation-delay: 0.5s;">✦</span>
+                    <span class="star" style="left: 60%; top: 15%; animation-delay: 1s;">✦</span>
+                    <span class="star" style="left: 80%; top: 25%; animation-delay: 1.5s;">✦</span>
+                    <span class="star" style="left: 45%; top: 30%; animation-delay: 0.8s;">✦</span>
+                </div>
+                <div class="wagon">🎓</div>
+                <div class="book-stack">📚</div>
+                <div class="ground"></div>
+            </div>
+            <div class="ascii-art">
+<pre>
+    _______________
+   |               |
+   |  [EDU PSYCH]  |
+   |_______________|
+        ||  ||
+    ___/____\___
+   |           |
+   |    🎓     |
+   |___________|
+      |     |
+     / \   / \
+    
+   "The only variable more 
+    unpredictable than your 
+    data? Your motivation."
+</pre>
+            </div>
+            <div class="narrative">
+                Welcome to graduate school, where the effect sizes are made up and the p-values don't matter (just kidding, they very much matter, and your committee will definitely ask about them).
+                <br><br>
+                You are a doctoral student embarking on the treacherous journey to complete your dissertation on motivation in educational settings. Along the way, you must apply motivation theories to survive, manage your resources, and avoid the deadly pitfalls of academic burnout.
+                <br><br>
+                Your goal: Reach "Dissertation Defense Ridge" with your sanity, motivation, and at least one faculty member who still returns your emails.
+                <br><br>
+                <span style="color: #00aa00; font-size: 20px;">✨ Each journey presents 9 random challenges from a bank of doctoral disasters. No two playthroughs are the same! ✨</span>
+            </div>
+            <div class="choices">
+                <button class="choice-btn" onclick="startGame()">► BEGIN YOUR JOURNEY</button>
+                <button class="choice-btn" onclick="showInstructions()">► LEARN ABOUT THE THEORIES</button>
+            </div>
+        </div>
+
+        <!-- INSTRUCTIONS SCREEN -->
+        <div id="instructions-screen" class="screen">
+            <div class="narrative">
+                <strong>MOTIVATION THEORIES YOU'LL ENCOUNTER:</strong>
+                <br><br>
+                <strong>Self-Determination Theory:</strong> Balance autonomy, competence, and relatedness
+                <br><br>
+                <strong>Self-Efficacy Theory:</strong> Your belief in your ability to succeed affects outcomes
+                <br><br>
+                <strong>Attribution Theory:</strong> How you explain success/failure impacts future motivation
+                <br><br>
+                <strong>Goal Orientation Theory:</strong> Mastery vs. performance goals matter
+                <br><br>
+                <strong>Expectancy-Value Theory:</strong> Motivation = Expectation of success × Value of task
+                <br><br>
+                Your survival depends on applying these theories wisely!
+            </div>
+            <div class="choices">
+                <button class="choice-btn" onclick="showScreen('title-screen')">► BACK TO START</button>
+            </div>
+        </div>
+
+        <!-- GAME SCREEN -->
+        <div id="game-screen" class="screen">
+            <div class="progress-indicator">
+                <span class="trail-segment">📚 START</span>
+                <span class="trail-segment" id="progress-bar">▓▓▓░░░░░░░</span>
+                <span class="trail-segment">🎓 DEFENSE</span>
+            </div>
+            
+            <div class="status-bar">
+                <div class="stat">
+                    <span class="stat-label">MOTIVATION:</span>
+                    <span class="stat-bar"><span id="motivation-bar" class="stat-fill" style="width: 100%"></span></span>
+                    <span id="motivation-num">100</span>%
+                </div>
+                <div class="stat">
+                    <span class="stat-label">SELF-EFFICACY:</span>
+                    <span class="stat-bar"><span id="efficacy-bar" class="stat-fill" style="width: 100%"></span></span>
+                    <span id="efficacy-num">100</span>%
+                </div>
+                <div class="stat">
+                    <span class="stat-label">COFFEE SUPPLY:</span>
+                    <span class="stat-bar"><span id="coffee-bar" class="stat-fill" style="width: 100%"></span></span>
+                    <span id="coffee-num">20</span> cups
+                </div>
+                <div class="stat">
+                    <span class="stat-label">ADVISOR GOODWILL:</span>
+                    <span class="stat-bar"><span id="advisor-bar" class="stat-fill" style="width: 100%"></span></span>
+                    <span id="advisor-num">100</span>%
+                </div>
+            </div>
+
+            <div id="event-area"></div>
+        </div>
+
+        <!-- GAME OVER SCREEN -->
+        <div id="gameover-screen" class="screen">
+            <div class="game-over">
+                <h2 id="gameover-title"></h2>
+                <div class="ascii-art" id="gameover-art"></div>
+                <div id="gameover-message" class="narrative"></div>
+                <div id="gameover-lessons" class="theory-box"></div>
+                <div class="choices">
+                    <button class="choice-btn" onclick="location.reload()">► TRY AGAIN</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Game State
+        let gameState = {
+            motivation: 100,
+            efficacy: 100,
+            coffee: 20,
+            advisor: 100,
+            progress: 0,
+            events: 0,
+            theories: [],
+            choices: []
+        };
+
+        // Particle effect for good choices
+        function createSuccessParticles() {
+            const particles = ['✨', '⭐', '🌟', '💡', '📚'];
+            const container = document.createElement('div');
+            container.className = 'success-particles';
+            document.body.appendChild(container);
+
+            for (let i = 0; i < 8; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.textContent = particles[Math.floor(Math.random() * particles.length)];
+                particle.style.left = Math.random() * window.innerWidth + 'px';
+                particle.style.top = window.innerHeight / 2 + 'px';
+                particle.style.animationDelay = (i * 0.1) + 's';
+                container.appendChild(particle);
+            }
+
+            setTimeout(() => {
+                document.body.removeChild(container);
+            }, 2000);
+        }
+
+        // Failure effect
+        function createFailureEffect() {
+            const particles = ['❌', '💔', '😰', '😢'];
+            const container = document.createElement('div');
+            container.className = 'success-particles';
+            document.body.appendChild(container);
+
+            for (let i = 0; i < 5; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.textContent = particles[Math.floor(Math.random() * particles.length)];
+                particle.style.left = Math.random() * window.innerWidth + 'px';
+                particle.style.top = window.innerHeight / 2 + 'px';
+                particle.style.animationDelay = (i * 0.15) + 's';
+                container.appendChild(particle);
+            }
+
+            setTimeout(() => {
+                document.body.removeChild(container);
+            }, 2000);
+        }
+
+        // Game Events Database - Expanded with 15+ possible chapters
+        const allEvents = [
+            {
+                title: "Chapter 1: The Literature Review Swamp",
+                narrative: "You've been reading for 6 hours straight. You find a meta-analysis that contradicts your entire theoretical framework. The researcher cites Deci and Ryan's Self-Determination Theory.",
+                ascii: `
+    📚 📚 📚
+   📚  😰  📚
+    📚 📚 📚
+     HELP!
+                `,
+                choices: [
+                    {
+                        text: "Apply mastery orientation: View this as a learning opportunity and revise your framework",
+                        theory: "Goal Orientation Theory",
+                        effects: { motivation: -10, efficacy: +15, coffee: 0, advisor: +10 },
+                        outcome: "GOOD CHOICE! Adopting a mastery goal orientation (focusing on learning and understanding rather than just proving competence) helps you grow from setbacks. Your self-efficacy increases!",
+                        lesson: "Mastery goals (learning/understanding) lead to better long-term outcomes than performance goals (proving ability)."
+                    },
+                    {
+                        text: "Apply performance-avoidance orientation: Avoid the contradiction and cite only supporting literature",
+                        theory: "Goal Orientation Theory",
+                        effects: { motivation: +5, efficacy: -20, coffee: -1, advisor: -15 },
+                        outcome: "POOR CHOICE! Performance-avoidance goals (avoiding looking incompetent) lead to shallow learning and anxiety. Your advisor notices the gaps.",
+                        lesson: "Performance-avoidance goals increase anxiety and reduce deep engagement with material."
+                    },
+                    {
+                        text: "Drink coffee and power through without addressing it",
+                        theory: "None",
+                        effects: { motivation: -15, efficacy: -10, coffee: -3, advisor: -5 },
+                        outcome: "You've ignored a fundamental issue. Your motivation and efficacy drop from cognitive dissonance.",
+                        lesson: "Avoiding challenges rather than engaging with them reduces both motivation and learning."
+                    }
+                ]
+            },
+            {
+                title: "Chapter 2: The Peer Review Ambush",
+                narrative: "Your draft comes back from your advisor covered in red ink. They write: 'Your methodology is unclear and your theoretical framework needs work.' You feel devastated.",
+                ascii: `
+    ❌❌❌
+   📄 😢 📄
+    ❌❌❌
+  RED EVERYWHERE
+                `,
+                choices: [
+                    {
+                        text: "Make an internal, unstable, controllable attribution: 'I didn't put enough effort into this draft, I can improve it'",
+                        theory: "Attribution Theory",
+                        effects: { motivation: +10, efficacy: +5, coffee: +2, advisor: +15 },
+                        outcome: "EXCELLENT! This adaptive attribution pattern maintains motivation. You believe you can improve through effort (controllable), it's about this specific situation (unstable), and it's about your actions (internal). You grab a coffee and get to work with renewed energy!",
+                        lesson: "Weiner's Attribution Theory: Attributing failure to controllable, unstable factors (like effort) maintains motivation better than attributing to stable, uncontrollable factors (like ability)."
+                    },
+                    {
+                        text: "Make an internal, stable, uncontrollable attribution: 'I'm just not smart enough for graduate school'",
+                        theory: "Attribution Theory",
+                        effects: { motivation: -25, efficacy: -20, coffee: -2, advisor: 0 },
+                        outcome: "MALADAPTIVE! Attributing failure to stable, uncontrollable factors (ability) devastates motivation and self-efficacy. This is called 'learned helplessness.'",
+                        lesson: "Attributing failure to lack of ability (stable, uncontrollable) leads to learned helplessness and motivational decline."
+                    },
+                    {
+                        text: "Make an external attribution: 'My advisor just doesn't understand my genius'",
+                        theory: "Attribution Theory",
+                        effects: { motivation: +5, efficacy: 0, coffee: -1, advisor: -25 },
+                        outcome: "While external attributions can protect self-esteem temporarily, they prevent learning and damage relationships. Your advisor is less willing to help.",
+                        lesson: "External attributions protect self-esteem but reduce learning and relationship quality."
+                    }
+                ]
+            },
+            {
+                title: "Chapter 3: The Methods Section Canyon",
+                narrative: "You need to choose a research method. Your advisor suggests one approach, but you have a different idea. The tension between autonomy and guidance is real.",
+                ascii: `
+    🔬  VS  💡
+   ADVISOR  YOU
+   SUGGEST  IDEA
+                `,
+                choices: [
+                    {
+                        text: "Assert autonomy: Use your method and explain why it better fits your research questions",
+                        theory: "Self-Determination Theory",
+                        effects: { motivation: +20, efficacy: +10, coffee: +1, advisor: +5 },
+                        outcome: "EXCELLENT! You satisfied the autonomy need from Self-Determination Theory while maintaining competence. Your intrinsic motivation soars! You feel so energized, coffee seems unnecessary, but you grab one anyway.",
+                        lesson: "SDT: Autonomy (feeling in control), competence (feeling capable), and relatedness (feeling connected) are basic psychological needs that fuel intrinsic motivation."
+                    },
+                    {
+                        text: "Comply externally: Use advisor's method but resent it internally",
+                        theory: "Self-Determination Theory",
+                        effects: { motivation: -15, efficacy: -5, coffee: -2, advisor: +10 },
+                        outcome: "External regulation without internalization. You're controlled by external factors, killing intrinsic motivation. You work but hate it.",
+                        lesson: "External regulation (doing something purely for external rewards/pressure) reduces intrinsic motivation."
+                    },
+                    {
+                        text: "Negotiate: Discuss both approaches and find an integrated solution",
+                        theory: "Self-Determination Theory",
+                        effects: { motivation: +15, efficacy: +15, coffee: -1, advisor: +20 },
+                        outcome: "OPTIMAL! You've integrated external input with your autonomous choice, satisfying both autonomy and relatedness needs. This is 'identified regulation.'",
+                        lesson: "Identified regulation (internalizing external values as your own) maintains motivation while incorporating guidance."
+                    }
+                ]
+            },
+            {
+                title: "Chapter 4: The Data Collection Desert",
+                narrative: "You're recruiting participants. After 50 rejections, you start to doubt whether anyone will participate. Each 'no' feels more personal.",
+                ascii: `
+    ❌ ❌ ❌
+   NO NO NO
+    😓 💔
+  50 REJECTIONS
+                `,
+                choices: [
+                    {
+                        text: "Use vicarious experience: Remember your colleague who also struggled with recruitment but eventually succeeded",
+                        theory: "Self-Efficacy Theory",
+                        effects: { motivation: +10, efficacy: +15, coffee: 0, advisor: 0 },
+                        outcome: "SMART! Vicarious experience is one of Bandura's four sources of self-efficacy. Seeing similar others succeed increases your belief in your own capabilities.",
+                        lesson: "Bandura's Self-Efficacy: Vicarious experiences (seeing similar others succeed) build self-efficacy, especially when you identify with the model."
+                    },
+                    {
+                        text: "Seek verbal persuasion: Ask your advisor for encouragement",
+                        theory: "Self-Efficacy Theory",
+                        effects: { motivation: +5, efficacy: +5, coffee: -1, advisor: +10 },
+                        outcome: "HELPFUL! Verbal persuasion is a source of self-efficacy, though weaker than actual accomplishment. Your advisor's encouragement helps.",
+                        lesson: "Verbal persuasion (encouragement from credible sources) can boost self-efficacy, but is less powerful than actual success experiences."
+                    },
+                    {
+                        text: "Focus on your physiological state: Interpret your anxiety as 'excitement' rather than inadequacy",
+                        theory: "Self-Efficacy Theory",
+                        effects: { motivation: +5, efficacy: +10, coffee: -2, advisor: 0 },
+                        outcome: "GOOD REFRAMING! Physiological/emotional states inform self-efficacy. Reinterpreting arousal positively can boost confidence.",
+                        lesson: "How we interpret physiological states (anxiety, arousal) affects self-efficacy. Reframing anxiety as excitement can help."
+                    }
+                ]
+            },
+            {
+                title: "Chapter 5: The Analysis Avalanche",
+                narrative: "Your data is messy. Really messy. You could spend weeks cleaning it properly, or cut corners to save time. Your dissertation defense is in 3 months.",
+                ascii: `
+   📊📊📊
+   😰💻😰
+  DATA CHAOS
+   DEADLINE!
+                `,
+                choices: [
+                    {
+                        text: "High task value: Recognize that proper analysis is crucial for your long-term career (utility value + attainment value)",
+                        theory: "Expectancy-Value Theory",
+                        effects: { motivation: +15, efficacy: +10, coffee: +1, advisor: +15 },
+                        outcome: "EXCELLENT! You've tapped into both utility value (usefulness for future goals) and attainment value (importance to identity). High task value × moderate expectancy = strong motivation! A colleague sees your dedication and buys you a coffee.",
+                        lesson: "Expectancy-Value Theory: Motivation = Expectancy (belief you can succeed) × Value (importance/usefulness/enjoyment of task). Increasing either increases motivation."
+                    },
+                    {
+                        text: "Low expectancy: Feel overwhelmed and convinced you can't do it properly, so you take shortcuts",
+                        theory: "Expectancy-Value Theory",
+                        effects: { motivation: -20, efficacy: -15, coffee: -1, advisor: -20 },
+                        outcome: "POOR CHOICE! Low expectancy of success drives your decision. Even if you value the task, believing you can't succeed kills motivation. Your advisor catches the shortcuts.",
+                        lesson: "When expectancy is very low, even high task value won't produce motivation. Both components are necessary."
+                    },
+                    {
+                        text: "Focus on intrinsic value: Find the interesting patterns in your messy data, making analysis enjoyable",
+                        theory: "Expectancy-Value Theory",
+                        effects: { motivation: +20, efficacy: +5, coffee: -2, advisor: +10 },
+                        outcome: "GREAT STRATEGY! Tapping into intrinsic value (enjoyment/interest) is powerful. You've transformed a chore into engaging detective work.",
+                        lesson: "Intrinsic value (interest/enjoyment) is a powerful component of task value that can sustain motivation through challenges."
+                    }
+                ]
+            },
+            {
+                title: "Chapter 6: The Imposter Syndrome Storm",
+                narrative: "You're at a conference. Everyone seems brilliant. You overhear two professors discussing topics you don't understand. You start to feel like a fraud.",
+                ascii: `
+   😰 💭
+  "I DON'T
+   BELONG
+   HERE..."
+   👥 👥 👥
+                `,
+                choices: [
+                    {
+                        text: "Social comparison - mastery focus: Compare yourself to your past self, not others",
+                        theory: "Goal Orientation Theory & Self-Efficacy",
+                        effects: { motivation: +15, efficacy: +15, coffee: 0, advisor: +5 },
+                        outcome: "WISE CHOICE! Mastery-oriented social comparison focuses on personal growth. You recognize you've learned tremendously, building self-efficacy through 'enactive mastery experiences.'",
+                        lesson: "Comparing yourself to your own past performance (mastery framing) is more motivationally adaptive than comparing to others (performance framing)."
+                    },
+                    {
+                        text: "Seek relatedness: Connect with other grad students who also feel uncertain",
+                        theory: "Self-Determination Theory",
+                        effects: { motivation: +10, efficacy: +10, coffee: -1, advisor: +5 },
+                        outcome: "SUPPORTIVE! You've fulfilled the relatedness need. Discovering others share your feelings normalizes the experience and builds community.",
+                        lesson: "Relatedness (feeling connected and supported) is a basic psychological need. Social support buffers against negative self-perceptions."
+                    },
+                    {
+                        text: "Downward comparison: Focus on people who know less than you to feel better",
+                        theory: "Social Comparison",
+                        effects: { motivation: +5, efficacy: -5, coffee: -1, advisor: -5 },
+                        outcome: "TEMPORARILY COMFORTING but undermining. Downward comparison protects ego but doesn't build genuine competence or foster learning orientation.",
+                        lesson: "Downward social comparison may protect self-esteem short-term but can foster fixed mindset and reduce growth motivation."
+                    }
+                ]
+            },
+            {
+                title: "Chapter 7: The Writing Block Blizzard",
+                narrative: "You sit down to write your discussion section. The cursor blinks mockingly. Three hours pass and you've written one sentence. Panic sets in.",
+                ascii: `
+   💻 ▌ ⏰
+   ⌨️ 😫 ☕
+  3 HOURS
+  1 SENTENCE
+                `,
+                choices: [
+                    {
+                        text: "Break task into smaller parts: Write just one paragraph about one finding (increase expectancy through sub-goals)",
+                        theory: "Expectancy-Value Theory & Goal-Setting",
+                        effects: { motivation: +15, efficacy: +20, coffee: +2, advisor: +5 },
+                        outcome: "STRATEGIC! Breaking overwhelming tasks into manageable sub-goals increases expectancy of success. You complete one paragraph, gain an 'enactive mastery experience,' and momentum builds! Success feels so good you treat yourself to a fresh cup of coffee (or two)!",
+                        lesson: "Proximal, specific goals increase expectancy of success and provide more frequent mastery experiences, building self-efficacy incrementally."
+                    },
+                    {
+                        text: "Force yourself to power through and write the whole thing perfectly (all-or-nothing approach)",
+                        theory: "None (counterproductive)",
+                        effects: { motivation: -20, efficacy: -15, coffee: -3, advisor: 0 },
+                        outcome: "OVERWHELMING! The task feels impossible. You've set an unrealistic standard. Perfectionism kills motivation when paired with low expectancy of success.",
+                        lesson: "All-or-nothing thinking and perfectionism reduce expectancy of success and can lead to paralysis rather than progress."
+                    },
+                    {
+                        text: "Shift to writing what interests you most first (increase intrinsic value)",
+                        theory: "Self-Determination Theory & Expectancy-Value",
+                        effects: { motivation: +20, efficacy: +10, coffee: -1, advisor: 0 },
+                        outcome: "ADAPTIVE! You've leveraged intrinsic value and autonomy. Starting with interesting content builds momentum and confidence.",
+                        lesson: "When stuck, increasing intrinsic value or autonomy can restore motivation. Interest and choice are powerful motivators."
+                    }
+                ]
+            },
+            {
+                title: "Chapter 8: The Feedback Loop Labyrinth",
+                narrative: "You've revised your chapter three times based on feedback. Now your advisor says it needs 'substantial revision' again. You're exhausted and questioning everything.",
+                ascii: `
+   🔄 🔄 🔄
+   📝 ➡️ 📝
+   REVISION
+   INFINITY!
+   😵 💫
+                `,
+                choices: [
+                    {
+                        text: "Growth mindset attribution: 'Each revision teaches me something and improves my skills'",
+                        theory: "Attribution Theory & Implicit Theories",
+                        effects: { motivation: +20, efficacy: +15, coffee: +3, advisor: +20 },
+                        outcome: "EXEMPLARY! You've combined adaptive attribution (effort-based, controllable) with growth mindset (ability is malleable). This is the most motivationally adaptive pattern possible. Your advisor notices your resilience and invites you to coffee to celebrate your progress!",
+                        lesson: "Growth mindset (believing abilities are malleable) combined with effort-based attributions creates resilience and sustained motivation through setbacks."
+                    },
+                    {
+                        text: "Fixed mindset attribution: 'I'm just not a good writer, maybe I should quit'",
+                        theory: "Attribution Theory & Implicit Theories",
+                        effects: { motivation: -30, efficacy: -25, coffee: -1, advisor: -10 },
+                        outcome: "DEVASTATING! Fixed mindset (ability is unchangeable) + stable attribution = learned helplessness. This cognitive pattern is strongly predictive of giving up.",
+                        lesson: "Fixed mindset (believing abilities are fixed) leads to interpreting setbacks as evidence of permanent inadequacy, causing motivational collapse."
+                    },
+                    {
+                        text: "Request specific, actionable feedback to increase competence",
+                        theory: "Self-Determination Theory & Self-Efficacy",
+                        effects: { motivation: +10, efficacy: +20, coffee: -1, advisor: +15 },
+                        outcome: "PROACTIVE! Seeking specific feedback supports both competence need and self-efficacy. You're taking autonomous action to address the issue. Your advisor appreciates the initiative.",
+                        lesson: "Specific, actionable feedback supports competence need better than vague criticism. Seeking clarity demonstrates autonomy and builds self-efficacy."
+                    }
+                ]
+            },
+            {
+                title: "Chapter 9: The Final Defense Approach",
+                narrative: "Your defense is in two weeks. You could over-prepare every possible question, or focus on mastering your core content. You're also exhausted and need to manage your energy.",
+                ascii: `
+   🎓 ⚔️ 🎓
+    2 WEEKS
+  ⏰ 😰 ⏰
+  DEFENSE OR
+   BURNOUT?
+                `,
+                choices: [
+                    {
+                        text: "Mastery-approach goal: Focus on deeply understanding your contribution rather than anticipating every critique",
+                        theory: "Goal Orientation Theory",
+                        effects: { motivation: +20, efficacy: +20, coffee: 0, advisor: +15 },
+                        outcome: "OPTIMAL! Mastery-approach goals reduce anxiety and increase genuine competence. You'll handle unexpected questions better because you understand deeply, not just memorized responses. This is the gold standard! You're so in the zone, coffee is unnecessary.",
+                        lesson: "Mastery-approach goals (focusing on learning and mastery) produce the best outcomes: lower anxiety, deeper learning, and better performance, especially on complex tasks."
+                    },
+                    {
+                        text: "Performance-avoidance goal: Obsess over every possible weakness and how to hide them",
+                        theory: "Goal Orientation Theory",
+                        effects: { motivation: -15, efficacy: -20, coffee: -4, advisor: 0 },
+                        outcome: "ANXIETY-INDUCING! Performance-avoidance goals create debilitating anxiety and shallow preparation. You're focused on not looking bad rather than being good. This is the least adaptive goal orientation.",
+                        lesson: "Performance-avoidance goals (focusing on not appearing incompetent) are most strongly associated with anxiety, procrastination, and poor performance."
+                    },
+                    {
+                        text: "Balance preparation with self-care: Trust your competence development and rest",
+                        theory: "Self-Efficacy Theory & Self-Determination Theory",
+                        effects: { motivation: +15, efficacy: +15, coffee: -1, advisor: +10 },
+                        outcome: "BALANCED! You trust your accumulated mastery experiences (self-efficacy source) and honor your needs (SDT). Overwork would harm performance through fatigue and reduced self-efficacy from poor physiological state.",
+                        lesson: "Past mastery experiences build trust in your capabilities. Physiological/emotional states affect self-efficacy—rest and stress management matter for performance."
+                    }
+                ]
+            },
+            // NEW CHAPTERS BELOW
+            {
+                title: "The IRB Approval Purgatory",
+                narrative: "Your IRB application has been 'pending review' for 6 weeks. You email weekly. They respond with vague requests for 'clarification.' Your study timeline is collapsing. You feel powerless.",
+                ascii: `
+   ⏰ 📧 ❓
+   WAITING...
+   😤 🤷 😤
+   WEEK 6
+                `,
+                choices: [
+                    {
+                        text: "Reframe your locus of control: Focus on what you CAN control (improving your application) rather than what you can't (their timeline)",
+                        theory: "Attribution Theory & Locus of Control",
+                        effects: { motivation: +15, efficacy: +10, coffee: +1, advisor: +5 },
+                        outcome: "WISE REFRAMING! Focusing on controllable factors maintains agency and motivation. You proactively improve your materials, which speeds approval when they finally review it. An internal locus of control is motivationally protective.",
+                        lesson: "Rotter's Locus of Control: Internal locus (believing outcomes are due to your actions) predicts higher achievement and persistence than external locus (believing outcomes are due to luck/fate)."
+                    },
+                    {
+                        text: "Adopt learned helplessness: Conclude that nothing you do matters, become passive",
+                        theory: "Attribution Theory",
+                        effects: { motivation: -25, efficacy: -20, coffee: -2, advisor: -10 },
+                        outcome: "CLASSIC LEARNED HELPLESSNESS! Seligman's research shows that perceived uncontrollability leads to motivational, cognitive, and emotional deficits. You stop trying to improve your application.",
+                        lesson: "Learned helplessness develops when people believe their actions don't influence outcomes. This attribution pattern (external, stable, global) devastates motivation and performance."
+                    },
+                    {
+                        text: "Maintain self-efficacy through small wins: Work on other controllable dissertation tasks while waiting",
+                        theory: "Self-Efficacy Theory",
+                        effects: { motivation: +10, efficacy: +15, coffee: 0, advisor: +10 },
+                        outcome: "STRATEGIC! You're building self-efficacy through enactive mastery experiences in related domains. These successes buffer against the frustration of waiting. Your advisor appreciates your productivity.",
+                        lesson: "Self-efficacy is domain-specific but can generalize. Maintaining competence in related areas protects overall motivation during uncontrollable setbacks."
+                    }
+                ]
+            },
+            {
+                title: "The Comprehensive Exam Gauntlet",
+                narrative: "Comps are tomorrow. You've studied for months but suddenly can't remember anything. Your brain feels like static. You could cram all night or trust your preparation.",
+                ascii: `
+   📚 ❓ 📚
+   😰 💤 ☕
+   TOMORROW
+   EXAM DAY!
+                `,
+                choices: [
+                    {
+                        text: "Trust your preparation and sleep: Recognize that consolidation > cramming",
+                        theory: "Self-Efficacy Theory & Cognitive Load Theory",
+                        effects: { motivation: +10, efficacy: +20, coffee: +2, advisor: +15 },
+                        outcome: "EVIDENCE-BASED! Sleep consolidates learning and maintains optimal physiological state for self-efficacy. Cramming creates cognitive overload and anxiety. You wake refreshed and confident. Your advisor is proud you made the smart choice.",
+                        lesson: "Self-efficacy is informed by physiological/emotional states. Managing these through self-care can be more effective than last-minute studying. Working memory limitations make cramming counterproductive."
+                    },
+                    {
+                        text: "Catastrophize and cram: 'If I don't study all night I'll fail everything forever'",
+                        theory: "Self-Efficacy Theory (negative)",
+                        effects: { motivation: -10, efficacy: -25, coffee: -4, advisor: 0 },
+                        outcome: "SELF-SABOTAGE! Catastrophizing increases anxiety (negative physiological state) and reduces self-efficacy. Sleep deprivation devastates cognitive performance. You arrive exhausted and your mind goes blank.",
+                        lesson: "Catastrophic thinking and anxiety create a negative feedback loop that undermines self-efficacy. Physiological state is one of Bandura's four sources of self-efficacy information."
+                    },
+                    {
+                        text: "Use implementation intentions: Create specific 'if-then' plans for managing anxiety during the exam",
+                        theory: "Self-Regulation & Goal-Setting Theory",
+                        effects: { motivation: +15, efficacy: +15, coffee: 0, advisor: +10 },
+                        outcome: "SOPHISTICATED! Gollwitzer's implementation intentions research shows that specific plans (e.g., 'If I panic, then I'll take three deep breaths') improve goal attainment. You've automated your coping response.",
+                        lesson: "Implementation intentions ('if-then' plans) are more effective than goal intentions alone. They reduce cognitive load during stressful situations by pre-deciding responses."
+                    }
+                ]
+            },
+            {
+                title: "The Funding Application Fiasco",
+                narrative: "You need funding to continue. The grant application is due in 48 hours. You have two options: submit a rushed application now, or skip this cycle and apply next year with a stronger proposal.",
+                ascii: `
+   💰 ⏰ 📝
+   48 HOURS
+   😰 🤔 😰
+   RUSH OR WAIT?
+                `,
+                choices: [
+                    {
+                        text: "Delay gratification: Wait for next cycle to submit a high-quality application (optimize expectancy × value)",
+                        theory: "Expectancy-Value Theory & Self-Regulation",
+                        effects: { motivation: +15, efficacy: +15, coffee: +1, advisor: +20 },
+                        outcome: "STRATEGIC THINKING! You've optimized the expectancy-value equation. A rushed application has low expectancy of success (reviewers notice quality issues). Higher expectancy next cycle yields better motivation × outcome. Your advisor strongly approves of your strategic thinking.",
+                        lesson: "Expectancy-Value Theory: When expectancy is very low, even high value won't produce motivation or success. Sometimes maximizing expected value means strategic delay."
+                    },
+                    {
+                        text: "Submit rushed work: 'Something is better than nothing'",
+                        theory: "None (counterproductive)",
+                        effects: { motivation: -15, efficacy: -15, coffee: -4, advisor: -15 },
+                        outcome: "POOR STRATEGY! You've created a lose-lose situation: low expectancy of success, high stress, and if rejected, you've gathered negative feedback that harms future self-efficacy. Your rushed proposal reflects poorly on your abilities.",
+                        lesson: "Low-quality submissions can create vicarious punishment and harm reputation. Failed attempts with low expectancy damage self-efficacy without providing useful learning experiences."
+                    },
+                    {
+                        text: "Negotiate timeline: Email program officer asking if a brief extension is possible",
+                        theory: "Self-Determination Theory & Self-Advocacy",
+                        effects: { motivation: +10, efficacy: +10, coffee: 0, advisor: +15 },
+                        outcome: "ASSERTIVE AND REALISTIC! You've exercised autonomy and self-advocacy. They can't extend, but appreciate your professionalism. You make an informed decision to wait, maintaining both competence and relatedness needs.",
+                        lesson: "Autonomy includes advocating for your needs. Even when requests are denied, the act of asking maintains sense of agency (internal locus of control)."
+                    }
+                ]
+            },
+            {
+                title: "The Co-Author Conflict Crisis",
+                narrative: "Your co-author made significant changes to your shared manuscript without consulting you. Some changes are good, others contradict your theoretical position. You're furious but need this publication.",
+                ascii: `
+   😠 ✏️ 📄
+   CHANGED IT
+   WITHOUT ME!
+   👥 💢 👥
+                `,
+                choices: [
+                    {
+                        text: "Separate task conflict from relationship conflict: Address the intellectual disagreement professionally",
+                        theory: "Self-Determination Theory (Relatedness) & Conflict Theory",
+                        effects: { motivation: +15, efficacy: +10, coffee: +1, advisor: +15 },
+                        outcome: "MATURE HANDLING! You distinguish between ideas (task conflict, which can be productive) and interpersonal animosity (relationship conflict, which is destructive). You schedule a meeting to discuss the theoretical issues. Relatedness is maintained while competence is asserted.",
+                        lesson: "Research on collaborative work shows task conflict can improve outcomes if separated from relationship conflict. SDT's relatedness need can coexist with intellectual disagreement."
+                    },
+                    {
+                        text: "Threaten to remove their authorship: 'Change it back or I'm taking you off the paper'",
+                        theory: "None (counterproductive)",
+                        effects: { motivation: +5, efficacy: -5, coffee: -2, advisor: -25 },
+                        outcome: "RELATIONSHIP DESTRUCTION! You've violated academic norms and damaged relatedness. Your advisor hears about this and questions your professionalism. The publication is jeopardized and your reputation suffers.",
+                        lesson: "Coercion and threats undermine relatedness and professional relationships. External regulation through punishment is the least sustainable form of motivation."
+                    },
+                    {
+                        text: "Practice cognitive reappraisal: View their edits as showing investment in the project rather than disrespect",
+                        theory: "Emotion Regulation & Attribution Theory",
+                        effects: { motivation: +10, efficacy: +5, coffee: 0, advisor: +10 },
+                        outcome: "EMOTIONALLY INTELLIGENT! Gross's emotion regulation research shows cognitive reappraisal (changing how you think about a situation) is more effective than suppression. You make a benign attribution for their behavior and can now collaborate productively.",
+                        lesson: "How we attribute others' behavior (hostile vs. benign intent) affects our emotional and motivational responses. Cognitive reappraisal is an adaptive emotion regulation strategy."
+                    }
+                ]
+            },
+            {
+                title: "The Teaching Overload Trap",
+                narrative: "You're TAing three courses while trying to complete your dissertation. Students email at 11pm expecting immediate responses. Your advisor keeps asking about your progress. Something has to give.",
+                ascii: `
+   📧 📧 📧
+   👥 👥 👥
+   😫 💻 😫
+   TOO MUCH!
+                `,
+                choices: [
+                    {
+                        text: "Set boundaries using implementation intentions: Create specific policies (e.g., 'I respond to emails within 24 hours, not immediately')",
+                        theory: "Self-Regulation & Self-Determination Theory",
+                        effects: { motivation: +20, efficacy: +15, coffee: +2, advisor: +10 },
+                        outcome: "SUSTAINABLE! You've created structure that protects your autonomy while maintaining competence in both roles. Implementation intentions automate your boundaries. Students adjust and your dissertation progresses. The structure itself reduces decision fatigue.",
+                        lesson: "Implementation intentions reduce ego depletion and support autonomous functioning. Baumeister's self-regulation research shows that structure and boundaries preserve self-control resources."
+                    },
+                    {
+                        text: "Try to do everything perfectly: Stay up all night responding to every email and working on dissertation",
+                        theory: "None (leads to burnout)",
+                        effects: { motivation: -25, efficacy: -20, coffee: -4, advisor: -5 },
+                        outcome: "BURNOUT TRAJECTORY! Maslach's burnout research identifies this pattern: emotional exhaustion + reduced personal accomplishment + depersonalization. Your work quality drops in ALL areas. You're headed for a breakdown.",
+                        lesson: "Attempting to meet unlimited demands leads to resource depletion and burnout. Without boundaries, even intrinsic motivation becomes exhausted through ego depletion."
+                    },
+                    {
+                        text: "Prioritize based on cost-value analysis: Identify which teaching tasks truly help students vs. create busywork",
+                        theory: "Expectancy-Value Theory & Time Management",
+                        effects: { motivation: +15, efficacy: +10, coffee: 0, advisor: +15 },
+                        outcome: "STRATEGIC PRIORITIZATION! You're maximizing value while managing limited resources. Not all tasks have equal expectancy of impact. Your students get better focused attention, your dissertation advances, and you model sustainable academic work practices.",
+                        lesson: "Expectancy-Value Theory applies to time allocation: prioritize high-value, high-expectancy tasks. Attempting to do everything equally well often means doing everything poorly."
+                    }
+                ]
+            },
+            {
+                title: "The Theory vs. Practice Paradox",
+                narrative: "You're studying motivation theory while completely unmotivated to work on your study of motivation theory. The irony is crushing. You wonder if you understand anything at all.",
+                ascii: `
+   📚 ≠ 💪
+   THEORY ≠ DO
+   😑 🤔 😑
+   META-CRISIS
+                `,
+                choices: [
+                    {
+                        text: "Use metacognitive awareness: Apply the theories to yourself as a case study",
+                        theory: "Self-Determination Theory & Metacognition",
+                        effects: { motivation: +25, efficacy: +20, coffee: +3, advisor: +20 },
+                        outcome: "BRILLIANT REFLEXIVITY! You've increased intrinsic value by making your work personally meaningful. Studying your own motivation through SDT lens, you realize your autonomy and competence needs are unmet. You restructure your work to satisfy them. Your advisor is impressed by your sophisticated self-awareness.",
+                        lesson: "Metacognition (thinking about thinking) and self-regulated learning involve applying theoretical knowledge to one's own processes. This increases both understanding and intrinsic value."
+                    },
+                    {
+                        text: "Conclude the theories are useless: 'If they worked, I'd be motivated right now'",
+                        theory: "None (logical fallacy)",
+                        effects: { motivation: -20, efficacy: -25, coffee: -2, advisor: -15 },
+                        outcome: "FALSE DICHOTOMY! You've made the ecological fallacy—assuming that knowledge alone equals application. Knowing exercise theory doesn't make you fit; knowing therapy techniques doesn't mean you're your own therapist. Understanding ≠ automatic implementation.",
+                        lesson: "Knowledge and behavior change are different processes. Implementation intentions, environmental design, and practice are needed to translate knowledge into action. Theories describe mechanisms, not guarantees."
+                    },
+                    {
+                        text: "Increase intrinsic value: Focus on the most interesting theoretical questions rather than feeling obligated to cover everything",
+                        theory: "Self-Determination Theory & Interest Theory",
+                        effects: { motivation: +20, efficacy: +10, coffee: +1, advisor: +5 },
+                        outcome: "FOLLOWING YOUR CURIOSITY! Hidi and Renninger's interest development model shows that situational interest can develop into individual interest. By pursuing what genuinely intrigues you, you've reignited intrinsic motivation. Autonomy + interest = sustainable engagement.",
+                        lesson: "Interest is both a motivational variable and a developmental process. Individual interest predicts long-term engagement. Autonomy to pursue genuine curiosity strengthens intrinsic motivation."
+                    }
+                ]
+            },
+            {
+                title: "The Job Market Judgment Day",
+                narrative: "You're on the academic job market. After 50 applications, you have one campus interview. The night before, you discover they want a research talk on work you haven't finished. You have 12 hours.",
+                ascii: `
+   📄 × 50
+   ➡️ 1 📞
+   🎤 😰 ⏰
+   TOMORROW!
+                `,
+                choices: [
+                    {
+                        text: "Present preliminary findings with appropriate caveats: Be transparent about work in progress while showcasing your thinking",
+                        theory: "Self-Efficacy Theory & Authentic Assessment",
+                        effects: { motivation: +15, efficacy: +20, coffee: +2, advisor: +20 },
+                        outcome: "ACADEMICALLY HONEST! You demonstrate competence by clearly distinguishing completed from preliminary work. The committee appreciates your intellectual honesty and theoretical sophistication. This authenticity builds real self-efficacy rather than fragile confidence based on deception.",
+                        lesson: "Authentic self-efficacy is based on accurate self-appraisal and genuine accomplishments. Inflated claims create fragile confidence that collapses under scrutiny. Transparency demonstrates intellectual maturity."
+                    },
+                    {
+                        text: "Present the findings as complete and hope they don't ask probing questions",
+                        theory: "None (high-risk deception)",
+                        effects: { motivation: -10, efficacy: -30, coffee: -3, advisor: -30 },
+                        outcome: "CATASTROPHIC! They ask follow-up questions. You can't answer. Your credibility is destroyed, and word spreads in your small field. You've sacrificed long-term reputation for short-term face-saving. Your self-efficacy collapses because you know it wasn't real.",
+                        lesson: "Self-efficacy must be grounded in reality. Inflated self-presentation creates anxiety (fear of exposure) and prevents genuine learning from feedback. Authenticity is foundational to sustainable confidence."
+                    },
+                    {
+                        text: "Reframe the talk: Present it as your developing research program, emphasizing questions and next steps",
+                        theory: "Goal Orientation Theory & Growth Mindset",
+                        effects: { motivation: +15, efficacy: +15, coffee: 0, advisor: +15 },
+                        outcome: "STRATEGIC FRAMING! You've adopted a mastery orientation to your job talk. Rather than trying to prove you're perfect (performance goal), you demonstrate your ability to develop ideas (learning goal). The committee sees a thoughtful, developing scholar.",
+                        lesson: "Mastery framing in high-stakes situations reduces anxiety and demonstrates intellectual sophistication. Committees often prefer candidates who show learning orientation over those who claim perfection."
+                    }
+                ]
+            },
+            {
+                title: "The Dissertation Pivot Proposal",
+                narrative: "You're 2 years into your study when you discover a major flaw in your theoretical framework. You could: pivot now (lose 2 years of work), continue with a flawed study (graduate faster), or try to salvage it (risky).",
+                ascii: `
+   2 YEARS
+   📚 ❌ 📚
+   😱 🤷 😱
+   PIVOT?!
+                `,
+                choices: [
+                    {
+                        text: "Apply sunk cost fallacy awareness: Recognize past investment shouldn't dictate future decisions",
+                        theory: "Decision-Making Theory & Goal-Setting",
+                        effects: { motivation: +20, efficacy: +15, coffee: +3, advisor: +25 },
+                        outcome: "ECONOMICALLY RATIONAL! You understand that past costs are irretrievable—the only relevant factor is future expected value. Your advisor is impressed by your maturity. You pivot, and your dissertation is stronger for it. This difficult decision demonstrates advanced scholarly judgment.",
+                        lesson: "Sunk cost fallacy leads people to persist in failing courses of action because of past investment. Optimal decision-making considers only future costs and benefits. Goal flexibility is adaptive."
+                    },
+                    {
+                        text: "Continue with flawed framework: 'I've already invested too much time to change now'",
+                        theory: "Sunk Cost Fallacy (negative example)",
+                        effects: { motivation: -15, efficacy: -20, coffee: -2, advisor: -25 },
+                        outcome: "CLASSIC SUNK COST FALLACY! You defend your dissertation but your committee tears apart the theoretical problems. Your first publications get rejected. You've traded 6 months now for years of career damage. Your advisor tried to warn you.",
+                        lesson: "Sunk cost fallacy: irrational persistence based on past investment rather than future expected value. Goal persistence should be based on probability of success, not past effort."
+                    },
+                    {
+                        text: "Collaborate with advisor to salvage: Find a way to reframe the research question that preserves data while fixing theory",
+                        theory: "Self-Determination Theory & Problem-Solving",
+                        effects: { motivation: +15, efficacy: +20, coffee: +1, advisor: +20 },
+                        outcome: "CREATIVE PROBLEM-SOLVING! You've maintained relatedness while asserting competence. Your advisor helps you see that with a revised research question, your data is valuable. You've avoided false dichotomy thinking (pivot OR continue). Collaborative solutions emerge from relatedness + competence.",
+                        lesson: "False dilemmas restrict options. Social support and collaborative problem-solving often reveal third paths. Relatedness + competence + autonomy (SDT) facilitate creative solutions."
+                    }
+                ]
+            }
+        ];
+
+        // Select 9 random events for this playthrough
+        let events = [];
+
+        function selectRandomEvents() {
+            // Shuffle array using Fisher-Yates algorithm
+            const shuffled = [...allEvents];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            // Take first 9 events
+            return shuffled.slice(0, 9);
+        }
+
+        function startGame() {
+            gameState = {
+                motivation: 100,
+                efficacy: 100,
+                coffee: 20,
+                advisor: 100,
+                progress: 0,
+                events: 0,
+                theories: [],
+                choices: []
+            };
+            // Select 9 random events for this playthrough
+            events = selectRandomEvents();
+            showScreen('game-screen');
+            nextEvent();
+        }
+
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+        }
+
+        function showInstructions() {
+            showScreen('instructions-screen');
+        }
+
+        function updateStats() {
+            // Store previous values for animation
+            const prevMotivation = parseInt(document.getElementById('motivation-num').textContent) || gameState.motivation;
+            const prevEfficacy = parseInt(document.getElementById('efficacy-num').textContent) || gameState.efficacy;
+            const prevAdvisor = parseInt(document.getElementById('advisor-num').textContent) || gameState.advisor;
+            const prevCoffee = parseInt(document.getElementById('coffee-num').textContent) || gameState.coffee;
+
+            // Clamp values
+            gameState.motivation = Math.max(0, Math.min(100, gameState.motivation));
+            gameState.efficacy = Math.max(0, Math.min(100, gameState.efficacy));
+            gameState.advisor = Math.max(0, Math.min(100, gameState.advisor));
+            gameState.coffee = Math.max(0, gameState.coffee);
+
+            // Animate stat changes
+            animateStat('motivation-bar', 'motivation-num', prevMotivation, gameState.motivation);
+            animateStat('efficacy-bar', 'efficacy-num', prevEfficacy, gameState.efficacy);
+            animateStat('advisor-bar', 'advisor-num', prevAdvisor, gameState.advisor);
+            animateStatDirect('coffee-bar', 'coffee-num', prevCoffee, gameState.coffee, 20);
+
+            // Update progress
+            const progressSegments = Math.floor((gameState.progress / 100) * 10);
+            const progressBar = '▓'.repeat(progressSegments) + '░'.repeat(10 - progressSegments);
+            document.getElementById('progress-bar').textContent = progressBar;
+
+            // Check for game over
+            if (gameState.motivation <= 0) {
+                gameOver('motivation');
+            } else if (gameState.efficacy <= 0) {
+                gameOver('efficacy');
+            } else if (gameState.coffee <= 0) {
+                gameOver('coffee');
+            } else if (gameState.advisor <= 0) {
+                gameOver('advisor');
+            } else if (gameState.progress >= 100) {
+                gameOver('win');
+            }
+        }
+
+        function animateStat(barId, numId, from, to) {
+            const bar = document.getElementById(barId);
+            const num = document.getElementById(numId);
+            const duration = 500; // ms
+            const steps = 20;
+            const stepTime = duration / steps;
+            const increment = (to - from) / steps;
+            
+            let current = from;
+            let step = 0;
+            
+            const interval = setInterval(() => {
+                step++;
+                current += increment;
+                
+                if (step >= steps) {
+                    current = to;
+                    clearInterval(interval);
+                }
+                
+                bar.style.width = Math.max(0, Math.min(100, current)) + '%';
+                num.textContent = Math.round(current);
+                
+                // Flash effect on change
+                if (to > from) {
+                    num.style.color = '#00ff00';
+                    num.style.textShadow = '0 0 10px #00ff00';
+                } else if (to < from) {
+                    num.style.color = '#ff3333';
+                    num.style.textShadow = '0 0 10px #ff3333';
+                }
+                
+                if (step >= steps) {
+                    setTimeout(() => {
+                        num.style.color = '#00ff00';
+                        num.style.textShadow = 'none';
+                    }, 200);
+                }
+            }, stepTime);
+        }
+
+        function animateStatDirect(barId, numId, from, to, max) {
+            const bar = document.getElementById(barId);
+            const num = document.getElementById(numId);
+            const duration = 500;
+            const steps = 20;
+            const stepTime = duration / steps;
+            const increment = (to - from) / steps;
+            
+            let current = from;
+            let step = 0;
+            
+            const interval = setInterval(() => {
+                step++;
+                current += increment;
+                
+                if (step >= steps) {
+                    current = to;
+                    clearInterval(interval);
+                }
+                
+                const percent = Math.min(100, (current / max) * 100);
+                bar.style.width = Math.max(0, percent) + '%';
+                num.textContent = Math.round(current);
+                
+                if (to > from) {
+                    num.style.color = '#00ff00';
+                    num.style.textShadow = '0 0 10px #00ff00';
+                } else if (to < from) {
+                    num.style.color = '#ff3333';
+                    num.style.textShadow = '0 0 10px #ff3333';
+                }
+                
+                if (step >= steps) {
+                    setTimeout(() => {
+                        num.style.color = '#00ff00';
+                        num.style.textShadow = 'none';
+                    }, 200);
+                }
+            }, stepTime);
+        }
+
+        function nextEvent() {
+            if (gameState.events >= events.length) {
+                // Victory!
+                gameState.progress = 100;
+                updateStats();
+                return;
+            }
+
+            const event = events[gameState.events];
+            
+            // Generate scene based on event
+            let sceneHtml = generateSceneForEvent(gameState.events);
+            
+            const eventHtml = `
+                ${sceneHtml}
+                <div class="narrative">
+                    <h2 style="font-family: 'Press Start 2P', cursive; font-size: 18px; margin-bottom: 15px;">
+                        ${event.title}
+                    </h2>
+                    <div class="ascii-art">${event.ascii}</div>
+                    ${event.narrative}
+                </div>
+                <div class="choices" id="event-choices">
+                    ${event.choices.map((choice, idx) => `
+                        <button class="choice-btn" onclick="makeChoice(${gameState.events}, ${idx})">
+                            ► ${choice.text}
+                        </button>
+                    `).join('')}
+                </div>
+            `;
+
+            document.getElementById('event-area').innerHTML = eventHtml;
+        }
+
+        function generateSceneForEvent(eventNum) {
+            const event = events[eventNum];
+            const title = event.title.toLowerCase();
+            
+            // Generate scene based on event title/theme
+            if (title.includes('literature') || title.includes('review')) {
+                return `<div class="pixel-scene">
+                    <div class="stars">
+                        <span class="star" style="left: 20%; top: 10%;">✦</span>
+                        <span class="star" style="left: 70%; top: 20%;">✦</span>
+                    </div>
+                    <div class="paper-fly" style="animation-delay: 0s;">📄</div>
+                    <div class="paper-fly" style="animation-delay: 2s; top: 40%;">📄</div>
+                    <div class="book-stack">📚📚📚</div>
+                    <div class="walking-scholar" style="animation-duration: 4s;">🚶</div>
+                    <div class="ground"></div>
+                </div>`;
+            } else if (title.includes('peer review') || title.includes('feedback') || title.includes('revision')) {
+                return `<div class="pixel-scene">
+                    <div class="stars">
+                        <span class="star" style="left: 15%; top: 15%;">✦</span>
+                        <span class="star" style="left: 60%; top: 25%;">✦</span>
+                    </div>
+                    <div style="position: absolute; left: 30%; bottom: 30px; font-size: 35px;" class="thinking">🤔</div>
+                    <div style="position: absolute; left: 50%; bottom: 20px; font-size: 40px;">📝</div>
+                    <div style="position: absolute; left: 70%; bottom: 25px; font-size: 30px; color: #ff0000;">❌</div>
+                    <div class="ground"></div>
+                </div>`;
+            } else if (title.includes('methods') || title.includes('irb')) {
+                return `<div class="pixel-scene">
+                    <div class="stars">
+                        <span class="star" style="left: 25%; top: 12%;">✦</span>
+                        <span class="star" style="left: 75%; top: 18%;">✦</span>
+                    </div>
+                    <div style="position: absolute; left: 25%; bottom: 20px; font-size: 35px;">🔬</div>
+                    <div style="position: absolute; left: 50%; bottom: 20px; font-size: 40px; animation: wagon-bounce 1s ease-in-out infinite;">💡</div>
+                    <div style="position: absolute; left: 75%; bottom: 20px; font-size: 35px;">📊</div>
+                    <div class="ground"></div>
+                </div>`;
+            } else if (title.includes('data collection') || title.includes('recruitment')) {
+                return `<div class="pixel-scene">
+                    <div class="stars">
+                        <span class="star" style="left: 10%; top: 10%;">✦</span>
+                        <span class="star" style="left: 50%; top: 20%;">✦</span>
+                        <span class="star" style="left: 85%; top: 15%;">✦</span>
+                    </div>
+                    <div class="walking-scholar" style="animation-duration: 5s;">🚶</div>
+                    <div style="position: absolute; right: 20%; bottom: 20px; font-size: 40px;">📋</div>
+                    <div class="ground"></div>
+                </div>`;
+            } else if (title.includes('analysis') || title.includes('data')) {
+                return `<div class="pixel-scene">
+                    <div class="stars">
+                        <span class="star" style="left: 30%; top: 15%;">✦</span>
+                        <span class="star" style="left: 65%; top: 10%;">✦</span>
+                    </div>
+                    <div style="position: absolute; left: 40%; bottom: 20px; font-size: 40px;" class="thinking">💻</div>
+                    <div style="position: absolute; left: 60%; bottom: 20px; font-size: 30px;">📊</div>
+                    <div class="coffee-steam">☁️</div>
+                    <div style="position: absolute; left: 55%; bottom: 20px; font-size: 35px;">☕</div>
+                    <div class="ground"></div>
+                </div>`;
+            } else if (title.includes('imposter') || title.includes('conference') || title.includes('comparison')) {
+                return `<div class="pixel-scene">
+                    <div class="stars">
+                        <span class="star" style="left: 20%; top: 20%;">✦</span>
+                        <span class="star" style="left: 80%; top: 15%;">✦</span>
+                    </div>
+                    <div style="position: absolute; left: 20%; bottom: 20px; font-size: 30px;">👤</div>
+                    <div style="position: absolute; left: 40%; bottom: 20px; font-size: 35px;" class="thinking">😰</div>
+                    <div style="position: absolute; left: 60%; bottom: 20px; font-size: 30px;">👤</div>
+                    <div style="position: absolute; left: 80%; bottom: 20px; font-size: 30px;">👤</div>
+                    <div class="ground"></div>
+                </div>`;
+            } else if (title.includes('writing') || title.includes('block')) {
+                return `<div class="pixel-scene">
+                    <div class="stars">
+                        <span class="star" style="left: 15%; top: 12%;">✦</span>
+                        <span class="star" style="left: 55%; top: 22%;">✦</span>
+                    </div>
+                    <div style="position: absolute; left: 50%; bottom: 20px; font-size: 40px; transform: translateX(-50%);" class="thinking">💻</div>
+                    <div style="position: absolute; left: 30%; bottom: 20px; font-size: 30px;">☕</div>
+                    <div style="position: absolute; left: 70%; bottom: 20px; font-size: 30px;">☕</div>
+                    <div class="coffee-steam" style="left: 30%;">☁️</div>
+                    <div class="ground"></div>
+                </div>`;
+            } else if (title.includes('comprehensive') || title.includes('exam')) {
+                return `<div class="pixel-scene">
+                    <div class="stars">
+                        <span class="star" style="left: 20%; top: 15%;">✦</span>
+                        <span class="star" style="left: 70%; top: 12%;">✦</span>
+                    </div>
+                    <div style="position: absolute; left: 50%; bottom: 20px; font-size: 45px; transform: translateX(-50%);" class="thinking">📖</div>
+                    <div style="position: absolute; left: 25%; bottom: 20px; font-size: 30px;">😰</div>
+                    <div style="position: absolute; left: 75%; bottom: 20px; font-size: 30px;">⏰</div>
+                    <div class="ground"></div>
+                </div>`;
+            } else if (title.includes('funding') || title.includes('grant')) {
+                return `<div class="pixel-scene">
+                    <div class="stars">
+                        <span class="star" style="left: 18%; top: 14%;">✦</span>
+                        <span class="star" style="left: 72%; top: 18%;">✦</span>
+                    </div>
+                    <div style="position: absolute; left: 50%; bottom: 20px; font-size: 45px; transform: translateX(-50%);">💰</div>
+                    <div style="position: absolute; left: 25%; bottom: 20px; font-size: 35px;">📝</div>
+                    <div style="position: absolute; left: 75%; bottom: 20px; font-size: 35px;">⏰</div>
+                    <div class="ground"></div>
+                </div>`;
+            } else if (title.includes('author') || title.includes('co-author') || title.includes('conflict')) {
+                return `<div class="pixel-scene">
+                    <div class="stars">
+                        <span class="star" style="left: 22%; top: 16%;">✦</span>
+                        <span class="star" style="left: 68%; top: 14%;">✦</span>
+                    </div>
+                    <div style="position: absolute; left: 35%; bottom: 20px; font-size: 35px;">👤</div>
+                    <div style="position: absolute; left: 50%; bottom: 30px; font-size: 25px;">💢</div>
+                    <div style="position: absolute; left: 65%; bottom: 20px; font-size: 35px;">👤</div>
+                    <div class="ground"></div>
+                </div>`;
+            } else if (title.includes('teaching') || title.includes('overload') || title.includes('email')) {
+                return `<div class="pixel-scene">
+                    <div class="stars">
+                        <span class="star" style="left: 15%; top: 18%;">✦</span>
+                        <span class="star" style="left: 75%; top: 13%;">✦</span>
+                    </div>
+                    <div class="paper-fly" style="animation-delay: 0s;">📧</div>
+                    <div class="paper-fly" style="animation-delay: 1.5s; top: 35%;">📧</div>
+                    <div class="paper-fly" style="animation-delay: 3s; top: 50%;">📧</div>
+                    <div style="position: absolute; left: 50%; bottom: 20px; font-size: 35px; transform: translateX(-50%);" class="thinking">😫</div>
+                    <div class="ground"></div>
+                </div>`;
+            } else if (title.includes('theory') || title.includes('practice') || title.includes('paradox') || title.includes('meta')) {
+                return `<div class="pixel-scene">
+                    <div class="stars">
+                        <span class="star" style="left: 25%; top: 14%;">✦</span>
+                        <span class="star" style="left: 65%; top: 19%;">✦</span>
+                    </div>
+                    <div style="position: absolute; left: 35%; bottom: 20px; font-size: 35px;">📚</div>
+                    <div style="position: absolute; left: 50%; bottom: 30px; font-size: 30px;">≠</div>
+                    <div style="position: absolute; left: 65%; bottom: 20px; font-size: 35px;">💪</div>
+                    <div class="ground"></div>
+                </div>`;
+            } else if (title.includes('job market') || title.includes('interview') || title.includes('campus')) {
+                return `<div class="pixel-scene">
+                    <div class="stars">
+                        <span class="star" style="left: 20%; top: 15%;">✦</span>
+                        <span class="star" style="left: 70%; top: 17%;">✦</span>
+                    </div>
+                    <div style="position: absolute; left: 50%; bottom: 20px; font-size: 40px; transform: translateX(-50%);">🎤</div>
+                    <div style="position: absolute; left: 30%; bottom: 20px; font-size: 30px;">👔</div>
+                    <div style="position: absolute; left: 70%; bottom: 20px; font-size: 30px;">👔</div>
+                    <div class="ground"></div>
+                </div>`;
+            } else if (title.includes('pivot') || title.includes('dissertation')) {
+                return `<div class="pixel-scene">
+                    <div class="stars">
+                        <span class="star" style="left: 18%; top: 16%;">✦</span>
+                        <span class="star" style="left: 72%; top: 13%;">✦</span>
+                    </div>
+                    <div style="position: absolute; left: 40%; bottom: 20px; font-size: 35px;">📚</div>
+                    <div style="position: absolute; left: 50%; bottom: 30px; font-size: 30px; animation: fly 2s ease-in-out infinite;">↪️</div>
+                    <div style="position: absolute; left: 60%; bottom: 20px; font-size: 35px;">❓</div>
+                    <div class="ground"></div>
+                </div>`;
+            } else if (title.includes('defense') || title.includes('final')) {
+                return `<div class="pixel-scene">
+                    <div class="stars">
+                        <span class="star" style="left: 10%; top: 10%;">✦</span>
+                        <span class="star" style="left: 35%; top: 18%;">✦</span>
+                        <span class="star" style="left: 65%; top: 15%;">✦</span>
+                        <span class="star" style="left: 90%; top: 12%;">✦</span>
+                    </div>
+                    <div style="position: absolute; left: 50%; bottom: 20px; font-size: 45px; transform: translateX(-50%); animation: glow 1.5s ease-in-out infinite;">🎓</div>
+                    <div style="position: absolute; left: 25%; bottom: 20px; font-size: 30px;">👔</div>
+                    <div style="position: absolute; left: 75%; bottom: 20px; font-size: 30px;">👔</div>
+                    <div class="ground"></div>
+                </div>`;
+            } else {
+                // Default academic scene
+                return `<div class="pixel-scene">
+                    <div class="stars">
+                        <span class="star" style="left: 20%; top: 15%;">✦</span>
+                        <span class="star" style="left: 70%; top: 18%;">✦</span>
+                    </div>
+                    <div style="position: absolute; left: 50%; bottom: 20px; font-size: 40px; transform: translateX(-50%);">📚</div>
+                    <div class="walking-scholar" style="animation-duration: 5s;">🚶</div>
+                    <div class="ground"></div>
+                </div>`;
+            }
+        }
+
+        function makeChoice(eventIdx, choiceIdx) {
+            const event = events[eventIdx];
+            const choice = event.choices[choiceIdx];
+
+            // Record choice
+            gameState.choices.push({
+                event: event.title,
+                choice: choice.text,
+                theory: choice.theory
+            });
+
+            // Track theory if applicable
+            if (choice.theory !== "None" && !gameState.theories.includes(choice.theory)) {
+                gameState.theories.push(choice.theory);
+            }
+
+            // Calculate total effect
+            const totalEffect = (choice.effects.motivation || 0) + 
+                               (choice.effects.efficacy || 0) + 
+                               (choice.effects.advisor || 0);
+
+            // Show particle effect based on outcome
+            if (totalEffect > 10) {
+                createSuccessParticles();
+            } else if (totalEffect < -10) {
+                createFailureEffect();
+            }
+
+            // Apply effects
+            gameState.motivation += choice.effects.motivation || 0;
+            gameState.efficacy += choice.effects.efficacy || 0;
+            gameState.coffee += choice.effects.coffee || 0;
+            gameState.advisor += choice.effects.advisor || 0;
+            gameState.progress += 11; // Move forward
+            gameState.events++;
+
+            // Show outcome
+            const outcomeHtml = `
+                <div class="narrative">
+                    ${choice.outcome}
+                </div>
+                <div class="theory-box">
+                    <div class="theory-title">📚 THEORY LEARNED: ${choice.theory}</div>
+                    ${choice.lesson}
+                </div>
+                <div class="choices">
+                    <button class="choice-btn" onclick="continueJourney()">► CONTINUE YOUR JOURNEY</button>
+                </div>
+            `;
+
+            document.getElementById('event-area').innerHTML = outcomeHtml;
+            updateStats();
+        }
+
+        function continueJourney() {
+            if (gameState.progress < 100) {
+                nextEvent();
+            }
+        }
+
+        function gameOver(reason) {
+            const messages = {
+                motivation: {
+                    title: "MOTIVATION DEPLETED",
+                    art: `
+    😔
+   💔💔💔
+   BURNOUT
+    `,
+                    message: "Your motivation has collapsed. You've experienced what researchers call 'amotivation'—the absence of any motivation to continue. You leave graduate school to become a barista. Ironically, you're very motivated to make perfect lattes.",
+                    lessons: "You learned about: " + gameState.theories.join(", ") + ". Remember: Maintaining motivation requires attending to basic psychological needs (SDT), protecting self-efficacy through adaptive attributions, and balancing challenge with competence."
+                },
+                efficacy: {
+                    title: "SELF-EFFICACY COLLAPSED",
+                    art: `
+    😰
+   ❌❌❌
+  I CAN'T
+    `,
+                    message: "Your belief in your ability to succeed has been completely shattered. This is learned helplessness. You drop out, convinced you're incapable, even though your actual ability was never the problem—it was your belief.",
+                    lessons: "You learned about: " + gameState.theories.join(", ") + ". Remember: Self-efficacy comes from mastery experiences, vicarious learning, persuasion, and managing physiological states. Attributing failure to stable, uncontrollable factors (like ability) destroys it."
+                },
+                coffee: {
+                    title: "CAFFEINE CRISIS",
+                    art: `
+    ☕ = 0
+    😴😴😴
+   ZZZZZ
+    `,
+                    message: "You've run out of coffee. Without caffeine, you fall asleep during your defense presentation. They let you try again next semester. You've learned that extrinsic regulation (coffee) can't substitute for intrinsic motivation forever.",
+                    lessons: "You learned about: " + gameState.theories.join(", ") + ". Remember: External regulators (like coffee) provide temporary boosts but can't sustain long-term motivation. Intrinsic motivation and identified regulation are more sustainable."
+                },
+                advisor: {
+                    title: "ADVISOR ABANDONMENT",
+                    art: `
+    👋
+   BYE!
+   📧❌
+    `,
+                    message: "Your advisor stops responding to emails. Your relatedness need is completely unmet. You've become an academic orphan. Without support and guidance, you can't navigate the dissertation process alone.",
+                    lessons: "You learned about: " + gameState.theories.join(", ") + ". Remember: Relatedness is a basic psychological need (SDT). Relationships with advisors and peers are crucial for motivation and success in graduate school."
+                },
+                win: {
+                    title: "DISSERTATION DEFENDED!",
+                    art: `
+    🎓
+   \\😄/
+   DOCTOR!
+    `,
+                    message: `Congratulations! You've successfully defended your dissertation on motivation in educational psychology. You've not only learned the theories—you've LIVED them. 
+                    
+                    Your journey taught you that motivation is complex, multifaceted, and requires constant attention. You balanced autonomy with guidance, attributed failures to controllable factors, maintained mastery goals, built self-efficacy through experiences, and managed the expectancy-value equation.
+                    
+                    Most importantly, you learned that motivation isn't a fixed trait—it's a dynamic state that can be understood, managed, and optimized through evidence-based strategies.`,
+                    lessons: `<strong>THEORIES MASTERED:</strong><br><br>${gameState.theories.join("<br>")}
+                    <br><br>
+                    <strong>KEY INSIGHTS:</strong><br>
+                    • Self-Determination Theory: Autonomy, competence, and relatedness are essential<br>
+                    • Attribution Theory: How we explain outcomes shapes future motivation<br>
+                    • Self-Efficacy: Belief in capability matters as much as actual ability<br>
+                    • Goal Orientation: Mastery goals beat performance goals<br>
+                    • Expectancy-Value: Both expectancy AND value are needed<br><br>
+                    Now go forth and motivate others, Doctor!`
+                }
+            };
+
+            const msg = messages[reason];
+            document.getElementById('gameover-title').textContent = msg.title;
+            document.getElementById('gameover-art').innerHTML = `<pre>${msg.art}</pre>`;
+            document.getElementById('gameover-message').textContent = msg.message;
+            document.getElementById('gameover-lessons').innerHTML = msg.lessons;
+
+            showScreen('gameover-screen');
+        }
+    </script>
+</body>
+</html>
