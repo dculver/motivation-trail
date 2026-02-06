@@ -146,25 +146,30 @@
 
         .stat {
             margin: 10px 0;
-            display: flex;
-            flex-wrap: wrap;
+            display: grid;
+            grid-template-columns: 200px 1fr auto;
+            grid-template-rows: auto;
             align-items: center;
             gap: 10px;
         }
 
         .stat-label {
-            min-width: 180px;
-            flex-shrink: 0;
+            grid-column: 1;
+            white-space: nowrap;
         }
 
         .stat-bar {
+            grid-column: 2;
             background: #003300;
-            width: 250px;
-            max-width: 100%;
+            width: 100%;
             height: 20px;
             border: 1px solid #00ff00;
             position: relative;
-            flex-grow: 1;
+        }
+
+        .stat-value {
+            grid-column: 3;
+            white-space: nowrap;
         }
 
         @media (max-width: 768px) {
@@ -174,12 +179,32 @@
             }
             
             .stat {
-                flex-direction: column;
-                align-items: flex-start;
+                grid-template-columns: 1fr;
+                grid-template-rows: auto auto auto;
+                gap: 5px;
+                margin: 15px 0;
+            }
+            
+            .stat-label {
+                grid-column: 1;
+                grid-row: 1;
             }
             
             .stat-bar {
-                width: 100%;
+                grid-column: 1;
+                grid-row: 2;
+            }
+            
+            .stat-value {
+                grid-column: 1;
+                grid-row: 3;
+                justify-self: end;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .status-bar {
+                font-size: 14px;
             }
         }
 
@@ -584,22 +609,22 @@
                 <div class="stat">
                     <span class="stat-label">MOTIVATION:</span>
                     <span class="stat-bar"><span id="motivation-bar" class="stat-fill" style="width: 100%"></span></span>
-                    <span id="motivation-num">100</span>%
+                    <span class="stat-value"><span id="motivation-num">100</span>%</span>
                 </div>
                 <div class="stat">
                     <span class="stat-label">SELF-EFFICACY:</span>
                     <span class="stat-bar"><span id="efficacy-bar" class="stat-fill" style="width: 100%"></span></span>
-                    <span id="efficacy-num">100</span>%
+                    <span class="stat-value"><span id="efficacy-num">100</span>%</span>
                 </div>
                 <div class="stat">
                     <span class="stat-label">COFFEE SUPPLY:</span>
                     <span class="stat-bar"><span id="coffee-bar" class="stat-fill" style="width: 100%"></span></span>
-                    <span id="coffee-num">20</span> cups
+                    <span class="stat-value"><span id="coffee-num">20</span> cups</span>
                 </div>
                 <div class="stat">
                     <span class="stat-label">ADVISOR GOODWILL:</span>
                     <span class="stat-bar"><span id="advisor-bar" class="stat-fill" style="width: 100%"></span></span>
-                    <span id="advisor-num">100</span>%
+                    <span class="stat-value"><span id="advisor-num">100</span>%</span>
                 </div>
             </div>
 
@@ -1418,11 +1443,16 @@
             // Generate scene based on event
             let sceneHtml = generateSceneForEvent(gameState.events);
             
+            // Create chapter title with sequential numbering (1-9)
+            const chapterNumber = gameState.events + 1;
+            const eventTitle = event.title.replace(/^Chapter \d+: /, ''); // Remove original chapter number
+            const sequentialTitle = `Chapter ${chapterNumber}: ${eventTitle}`;
+            
             const eventHtml = `
                 ${sceneHtml}
                 <div class="narrative">
                     <h2 style="font-family: 'Press Start 2P', cursive; font-size: 18px; margin-bottom: 15px;">
-                        ${event.title}
+                        ${sequentialTitle}
                     </h2>
                     <div class="ascii-art">${event.ascii}</div>
                     ${event.narrative}
